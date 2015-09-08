@@ -22,6 +22,10 @@ try:
     
     calibratedPostion = (calibrationParameter1 * 
                         (position - calibrationParameter2))
+                        
+    if calibratedPostion <= -7:
+        calibratedPostion = -7
+    
  
 except:   
     

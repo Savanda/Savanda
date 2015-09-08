@@ -1,0 +1,128 @@
+From 4c4acc6b3a311fea6357f40de8984364ebf0a281 Mon Sep 17 00:00:00 2001
+From: Gustaf Ullman <gustafullman@Gustafs-MacBook-Pro.local>
+Date: Thu, 4 Jun 2015 17:17:16 +0200
+Subject: [PATCH] Changes to make pySerial compatible with python 3.x
+
+---
+ serial/serialposix.py | 45 ++++++---------------------------------------
+ serial/serialutil.py  |  7 ++-----
+ 2 files changed, 8 insertions(+), 44 deletions(-)
+
+diff --git a/serial/serialposix.py b/serial/serialposix.py
+index b9b4b28..53b675d 100644
+--- a/serial/serialposix.py
++++ b/serial/serialposix.py
+@@ -55,42 +55,9 @@ if   plat[:5] == 'linux':    # Linux (confirmed)
+ 
+             # set serial_struct
+             res = FCNTL.ioctl(port.fd, TCSETS2, buf)
+-        except IOError, e:
++        except IOError as e:
+             raise ValueError('Failed to set custom baud rate (%s): %s' % (baudrate, e))
+ 
+-    baudrate_constants = {
+-        0:       0000000,  # hang up
+-        50:      0000001,
+-        75:      0000002,
+-        110:     0000003,
+-        134:     0000004,
+-        150:     0000005,
+-        200:     0000006,
+-        300:     0000007,
+-        600:     0000010,
+-        1200:    0000011,
+-        1800:    0000012,
+-        2400:    0000013,
+-        4800:    0000014,
+-        9600:    0000015,
+-        19200:   0000016,
+-        38400:   0000017,
+-        57600:   0010001,
+-        115200:  0010002,
+-        230400:  0010003,
+-        460800:  0010004,
+-        500000:  0010005,
+-        576000:  0010006,
+-        921600:  0010007,
+-        1000000: 0010010,
+-        1152000: 0010011,
+-        1500000: 0010012,
+-        2000000: 0010013,
+-        2500000: 0010014,
+-        3000000: 0010015,
+-        3500000: 0010016,
+-        4000000: 0010017
+-    }
+ 
+ elif plat == 'cygwin':       # cygwin/win32 (confirmed)
+ 
+@@ -287,7 +254,7 @@ class PosixSerial(SerialBase):
+         # open
+         try:
+             self.fd = os.open(self.portstr, os.O_RDWR|os.O_NOCTTY|os.O_NONBLOCK)
+-        except IOError, msg:
++        except IOError as msg:
+             self.fd = None
+             raise SerialException(msg.errno, "could not open port %s: %s" % (self._port, msg))
+         #~ fcntl.fcntl(self.fd, FCNTL.F_SETFL, 0)  # set blocking
+@@ -321,7 +288,7 @@ class PosixSerial(SerialBase):
+         try:
+             orig_attr = termios.tcgetattr(self.fd)
+             iflag, oflag, cflag, lflag, ispeed, ospeed, cc = orig_attr
+-        except termios.error, msg:      # if a port is nonexistent but has a /dev file, it'll fail here
++        except termios.error as msg:      # if a port is nonexistent but has a /dev file, it'll fail here
+             raise SerialException("Could not configure port: %s" % msg)
+         # set up raw mode / no echo / binary
+         cflag |=  (TERMIOS.CLOCAL|TERMIOS.CREAD)
+@@ -474,12 +441,12 @@ class PosixSerial(SerialBase):
+                     # but reading returns nothing.
+                     raise SerialException('device reports readiness to read but returned no data (device disconnected or multiple access on port?)')
+                 read.extend(buf)
+-            except select.error, e:
++            except select.error as e:
+                 # ignore EAGAIN errors. all other errors are shown
+                 # see also http://www.python.org/dev/peps/pep-3151/#select
+                 if e[0] != errno.EAGAIN:
+                     raise SerialException('read failed: %s' % (e,))
+-            except OSError, e:
++            except OSError as e:
+                 # ignore EAGAIN errors. all other errors are shown
+                 if e.errno != errno.EAGAIN:
+                     raise SerialException('read failed: %s' % (e,))
+@@ -513,7 +480,7 @@ class PosixSerial(SerialBase):
+                         raise SerialException('write failed (select)')
+                 d = d[n:]
+                 tx_len -= n
+-            except OSError, v:
++            except OSError as v:
+                 if v.errno != errno.EAGAIN:
+                     raise SerialException('write failed: %s' % (v,))
+         return len(data)
+diff --git a/serial/serialutil.py b/serial/serialutil.py
+index f28ece4..ab53ff6 100644
+--- a/serial/serialutil.py
++++ b/serial/serialutil.py
+@@ -311,10 +311,7 @@ class SerialBase(object):
+         was_open = self._isOpen
+         if was_open: self.close()
+         if port is not None:
+-            if isinstance(port, basestring):
+-                self.portstr = port
+-            else:
+-                self.portstr = self.makeDeviceName(port)
++            self.portstr = port
+         else:
+             self.portstr = None
+         self._port = port
+@@ -532,7 +529,7 @@ class SerialBase(object):
+         n = len(data)
+         try:
+             b[:n] = data
+-        except TypeError, err:
++        except TypeError as err:
+             import array
+             if not isinstance(b, array.array):
+                 raise err
+-- 
+1.9.5 (Apple Git-50.3)
+
