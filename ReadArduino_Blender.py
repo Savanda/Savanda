@@ -1,8 +1,14 @@
 import bge
 import GameLogic
 
-calibrationParameter1 = 24
-calibrationParameter2 = 2.40
+signalExhale = 1.54
+signalInhale = 2.24
+
+positionBirdTop = 4
+positionBirdBottom = -7
+
+calibrationParameter1 = (positionBirdTop - positionBirdBottom)/(signalInhale - signalExhale)
+calibrationParameter2 = (signalInhale * positionBirdBottom - signalExhale * positionBirdTop)/(signalInhale - signalExhale)
 
 try:
     serialPort = GameLogic.serialPort
@@ -20,11 +26,13 @@ try:
     intLetter3 = int(letter4)
     position = intLetter1 + 0.1 * intLetter2 + 0.01 * intLetter3
     
-    calibratedPostion = (calibrationParameter1 * 
-                        (position - calibrationParameter2))
+    calibratedPostion = calibrationParameter2 + calibrationParameter1 * position
                         
-    if calibratedPostion <= -7:
-        calibratedPostion = -7
+    if calibratedPostion <= positionBirdBottom:
+        calibratedPostion = positionBirdBottom
+
+    if calibratedPostion > positionBirdTop:
+        calibratedPostion = positionBirdTop
     
  
 except:   
